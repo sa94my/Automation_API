@@ -4,12 +4,14 @@ import models.AssignedHospitalWarehouseContext;
 import models.SelectedInventoryItem;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.shaft.driver.SHAFT;
 import io.qameta.allure.Step;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.UUID;
 
 public class OutboundFlows {
@@ -81,6 +83,7 @@ public class OutboundFlows {
 
     @Step("Create outbound request")
     public OutboundFlows createOutbound(String deliveryDate, int requestedQuantity) {
+        //deliverydate format yyyy-mm-dd
         if (warehouseContext == null) {
             throw new IllegalStateException("Call getWarehouse() before createOutbound()");
         }
@@ -89,13 +92,15 @@ public class OutboundFlows {
         }
 
         String orderRequestCode = UUID.randomUUID().toString();
+        Map<String, Object> requestBody = toRequestBodyMap(Queries.CREATE_OUTBOUND(
+                warehouseContext,
+                selectedInventoryItem,
+                orderRequestCode,
+                deliveryDate,
+                requestedQuantity));
+
         createOutboundResponse = apiDriver.post(Endpoints.outbound)
-                .setRequestBody(Queries.CREATE_OUTBOUND(
-                        warehouseContext,
-                        selectedInventoryItem,
-                        orderRequestCode,
-                        deliveryDate,
-                        requestedQuantity))
+                .setRequestBody(requestBody)
                 .setContentType(ContentType.JSON)
                 .perform()
                 .getResponse();
@@ -109,6 +114,11 @@ public class OutboundFlows {
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse API response body", e);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> toRequestBodyMap(ObjectNode payload) {
+        return OBJECT_MAPPER.convertValue(payload, Map.class);
     }
 }
 

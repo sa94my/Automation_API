@@ -1,5 +1,6 @@
 package apis;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import models.AssignedHospitalWarehouseContext;
 import models.CreateOutboundPayloadBuilder;
 import models.SelectedInventoryItem;
@@ -67,7 +68,7 @@ public class Queries {
                 }""".formatted(inventoryId, expiryDate);
     }
 
-    public static String CREATE_OUTBOUND(
+    public static ObjectNode CREATE_OUTBOUND(
             AssignedHospitalWarehouseContext warehouse,
             SelectedInventoryItem item,
             String orderRequestCode,

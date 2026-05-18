@@ -1,6 +1,5 @@
 package models;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -28,27 +27,23 @@ public final class CreateOutboundPayloadBuilder {
     private CreateOutboundPayloadBuilder() {
     }
 
-    public static String build(
+    public static ObjectNode build(
             AssignedHospitalWarehouseContext warehouse,
             SelectedInventoryItem item,
             String orderRequestCode,
             String deliveryDate,
             int requestedQuantity
     ) {
-        try {
-            ObjectNode root = OBJECT_MAPPER.createObjectNode();
-            root.put("operationName", "CreateOutbound");
+        ObjectNode root = OBJECT_MAPPER.createObjectNode();
+        root.put("operationName", "CreateOutbound");
 
-            ObjectNode input = root.putObject("variables").putObject("input");
-            buildOrderInformation(input.putObject("orderInformation"), warehouse, item, orderRequestCode, deliveryDate);
-            buildRequesterInformation(input.putObject("requesterInformation"), warehouse);
-            buildItemsInformation(input.putArray("itemsInformation"), item, requestedQuantity);
+        ObjectNode input = root.putObject("variables").putObject("input");
+        buildOrderInformation(input.putObject("orderInformation"), warehouse, item, orderRequestCode, deliveryDate);
+        buildRequesterInformation(input.putObject("requesterInformation"), warehouse);
+        buildItemsInformation(input.putArray("itemsInformation"), item, requestedQuantity);
 
-            root.put("query", MUTATION);
-            return OBJECT_MAPPER.writeValueAsString(root);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to build CreateOutbound request body", e);
-        }
+        root.put("query", MUTATION);
+        return root;
     }
 
     private static void buildOrderInformation(
@@ -63,7 +58,7 @@ public final class CreateOutboundPayloadBuilder {
         orderInformation.put("comment", COMMENT);
         orderInformation.put("orderType", ORDER_TYPE);
         orderInformation.put("orderNote", ORDER_NOTE);
-        orderInformation.set("shipmentOrganizationId", OBJECT_MAPPER.createObjectNode());
+        orderInformation.putNull("shipmentOrganizationId");
         orderInformation.put("shipmentOrganizationNupcoId", parseNupcoId(warehouse.nupcoId()));
         orderInformation.put("deliveryDate", deliveryDate);
         orderInformation.put("plantCode", warehouse.plantCode());
@@ -97,10 +92,18 @@ public final class CreateOutboundPayloadBuilder {
         lineItem.put("unitOfMeasure", item.unitOfMeasure());
         lineItem.put("stockQuantity", item.stockQuantity());
         lineItem.put("availableQuantity", item.availableQuantity());
-        lineItem.set("min", OBJECT_MAPPER.createObjectNode());
-        lineItem.set("max", OBJECT_MAPPER.createObjectNode());
+        putNullableInt(lineItem, "min", item.min());
+        putNullableInt(lineItem, "max", item.max());
         lineItem.put("requestedQuantity", requestedQuantity);
-        lineItem.set("remainingFromMax", OBJECT_MAPPER.createObjectNode());
+        putNullableInt(lineItem, "remainingFromMax", item.remainingFromMaxQuantity());
+    }
+
+    private static void putNullableInt(ObjectNode node, String field, Integer value) {
+        if (value == null) {
+            node.putNull(field);
+        } else {
+            node.put(field, value);
+        }
     }
 
     private static int parseNupcoId(String nupcoId) {
