@@ -2,7 +2,6 @@ package apis;
 
 import com.shaft.api.RestActions;
 import com.shaft.driver.SHAFT;
-import com.shaft.tools.io.ReportManager;
 import io.qameta.allure.Step;
 import io.restassured.RestAssured;
 import io.restassured.config.RedirectConfig;
@@ -19,8 +18,8 @@ import java.util.Map;
 public class AuthUtils {
 
     private SHAFT.API apiDriver;
-    private static final String ssoUrl=System.getProperty("SSO_URL");
-    private static final String baseURL=System.getProperty("baseURL");
+    private static final String ssoUrl = System.getProperty("SSO_URL");
+    private static final String baseURL = System.getProperty("baseURL");
 
     @Step("Login to portal")
     public String login(String username, String password) throws MalformedURLException {
@@ -42,7 +41,7 @@ public class AuthUtils {
 
         String sso_loginId= response.htmlPath().getString("**.find { it.name() == 'form' }.@action");
 
-        response=apiDriver.post(ssoUrl+sso_loginId).setParameters(params, RestActions.ParametersType.FORM).perform().getResponse();
+        response = apiDriver.post(ssoUrl + sso_loginId).setParameters(params, RestActions.ParametersType.FORM).perform().getResponse();
 
         String loginResponse, acsURL, saml, relay;
 

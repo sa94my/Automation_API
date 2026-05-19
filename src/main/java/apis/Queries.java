@@ -1,9 +1,6 @@
 package apis;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import models.AssignedHospitalWarehouseContext;
-import models.CreateOutboundPayloadBuilder;
-import models.SelectedInventoryItem;
+import models.OutboundOrder;
 
 public class Queries {
 
@@ -32,7 +29,7 @@ public class Queries {
     }
 
     // Could be expanded/enhanced to use for filtering by classification OR searching for an order if needed
-    public static String GET_INVENTORY_ITEMS(String inventoryId, String expiryDate) {
+    public static String GET_INVENTORY_ITEMS(String inventoryId, String expiryDate, String minimumAvailableQuantity) {
         return """
                 {
                   "operationName": "listInventory",
@@ -59,28 +56,91 @@ public class Queries {
                       },
                       {
                         "columnName": "AVAILABLE_GENERIC_QUANTITY",
-                        "value": "10",
+                        "value": "%s",
                         "operatorType": "MORE_THAN"
                       }
                     ]
                   },
                   "query": "query listInventory($inventoryId: String!, $organizationType: OrganizationSearch!, $skip: Int!, $take: Int!, $columnName: InventoryItemsFilterColumns!, $orderType: OrderTypeEnum!, $searchColumns: InventoryType!, $searchKey: String!, $execludedGenerics: [String!], $filters: [FilterDataModelOfInventoryItemsFilterColumnsInput!]) {\\n  query_0_4(\\n    organizationType: {typeColumn: $organizationType, id: $inventoryId}\\n    sortingAndFiltering: {filters: $filters, order: {columnName: $columnName, orderType: $orderType}, pager: {skip: $skip, take: $take}}\\n    execludedGenerics: $execludedGenerics\\n    search: {searchKey: $searchKey, searchColumns: $searchColumns}\\n  ) {\\n    errors\\n    status\\n    data {\\n      count\\n      inventoryId\\n      genericCode\\n      genericName\\n      classificationName\\n      classificationId\\n      unitOfMeasure\\n      stockQuantity\\n      availableQuantity\\n      bookedQuantity\\n      bookedGenericQuantity\\n      availableGenericQuantity\\n      min\\n      max\\n      plantCode\\n      plantName\\n      sloc\\n      nupcoDepartmentId\\n      remainingFromMaxQuantity\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n"
-                }""".formatted(inventoryId, expiryDate);
+                }""".formatted(inventoryId, expiryDate, minimumAvailableQuantity);
     }
 
-    public static ObjectNode CREATE_OUTBOUND(
-            AssignedHospitalWarehouseContext warehouse,
-            SelectedInventoryItem item,
-            String orderRequestCode,
-            String deliveryDate,
-            int requestedQuantity
-    ) {
-        return CreateOutboundPayloadBuilder.build(
-                warehouse,
-                item,
-                orderRequestCode,
-                deliveryDate,
-                requestedQuantity
+    public static String CREATE_OUTBOUND(OutboundOrder order) {
+        return """
+                {
+                  "operationName": "CreateOutbound",
+                  "variables": {
+                    "input": {
+                      "orderInformation": {
+                        "orderRequestCode": "%s",
+                        "shipmentLocation": "%s",
+                        "comment": "-",
+                        "orderType": 1,
+                        "orderNote": "-",
+                        "shipmentOrganizationId": null,
+                        "shipmentOrganizationNupcoId": %d,
+                        "deliveryDate": "%s",
+                        "plantCode": "%s",
+                        "sLoc": "%s",
+                        "nupcoDepartmentId": "%s",
+                        "classification": "%s",
+                        "classificationId": %d
+                      },
+                      "requesterInformation": {
+                        "requesterInventoryName": "%s",
+                        "requesterInventoryCorrelationID": "%s",
+                        "sourceInventoryName": "%s",
+                        "sourceInventoryCorrelationID": "%s",
+                        "organizationNupcoId": "%s",
+                        "isNupcoCustody": %s,
+                        "customerCode": "%s"
+                      },
+                      "itemsInformation": [
+                        {
+                          "nUPCOCode": "%s",
+                          "genericName": "%s",
+                          "unitOfMeasure": "%s",
+                          "stockQuantity": %d,
+                          "availableQuantity": %d,
+                          "min": %s,
+                          "max": %s,
+                          "requestedQuantity": %d,
+                          "remainingFromMax": %s
+                        }
+                      ]
+                    }
+                  },
+                  "query": "mutation CreateOutbound($input: RequestOrderDataModelInput!) {\\n  createOutboundRequestCreateTaskSubmit_V1(requestOrderInput: $input) {\\n    status\\n    data\\n    errors {\\n      message\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n"
+                }""".formatted(
+                order.orderRequestCode(),
+                order.hospitalName(),
+                order.shipmentOrganizationNupcoId(),
+                order.deliveryDate(),
+                order.plantCode(),
+                order.sLocCode(),
+                order.nupcoDepartmentId(),
+                order.classificationName(),
+                order.classificationId(),
+                order.requesterInventoryName(),
+                order.requesterInventoryCorrelationId(),
+                order.hospitalName(),
+                order.sourceInventoryCorrelationId(),
+                order.organizationNupcoId(),
+                order.isNupcoCustody(),
+                order.customerCode(),
+                order.genericCode(),
+                order.genericName(),
+                order.unitOfMeasure(),
+                order.stockQuantity(),
+                order.availableQuantity(),
+                jsonIntOrNull(order.min()),
+                jsonIntOrNull(order.max()),
+                order.requestedQuantity(),
+                jsonIntOrNull(order.remainingFromMax())
         );
+    }
+
+    private static String jsonIntOrNull(Integer value) {
+        return value == null ? "null" : value.toString();
     }
 }
