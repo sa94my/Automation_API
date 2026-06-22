@@ -29,7 +29,7 @@ public class Queries {
     }
 
     // Could be expanded/enhanced to use for filtering by classification OR searching for an order if needed
-    public static String GET_INVENTORY_ITEMS(String inventoryId, String expiryDate, String minimumAvailableQuantity) {
+    public static String GET_INVENTORY_ITEMS(String inventoryId, String searchKey,String expiryDate, String minimumAvailableQuantity) {
         return """
                 {
                   "operationName": "listInventory",
@@ -41,7 +41,7 @@ public class Queries {
                     "columnName": "AVAILABLE_GENERIC_QUANTITY",
                     "orderType": "DESC",
                     "searchColumns": "WAREHOUSE_INVENTORY",
-                    "searchKey": "",
+                    "searchKey": "%s",
                     "execludedGenerics": [],
                     "filters": [
                       {
@@ -62,7 +62,7 @@ public class Queries {
                     ]
                   },
                   "query": "query listInventory($inventoryId: String!, $organizationType: OrganizationSearch!, $skip: Int!, $take: Int!, $columnName: InventoryItemsFilterColumns!, $orderType: OrderTypeEnum!, $searchColumns: InventoryType!, $searchKey: String!, $execludedGenerics: [String!], $filters: [FilterDataModelOfInventoryItemsFilterColumnsInput!]) {\\n  query_0_4(\\n    organizationType: {typeColumn: $organizationType, id: $inventoryId}\\n    sortingAndFiltering: {filters: $filters, order: {columnName: $columnName, orderType: $orderType}, pager: {skip: $skip, take: $take}}\\n    execludedGenerics: $execludedGenerics\\n    search: {searchKey: $searchKey, searchColumns: $searchColumns}\\n  ) {\\n    errors\\n    status\\n    data {\\n      count\\n      inventoryId\\n      genericCode\\n      genericName\\n      classificationName\\n      classificationId\\n      unitOfMeasure\\n      stockQuantity\\n      availableQuantity\\n      bookedQuantity\\n      bookedGenericQuantity\\n      availableGenericQuantity\\n      min\\n      max\\n      plantCode\\n      plantName\\n      sloc\\n      nupcoDepartmentId\\n      remainingFromMaxQuantity\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n"
-                }""".formatted(inventoryId, expiryDate, minimumAvailableQuantity);
+                }""".formatted(inventoryId, searchKey,expiryDate, minimumAvailableQuantity);
     }
 
     public static String CREATE_OUTBOUND(OutboundOrder order) {

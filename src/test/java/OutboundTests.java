@@ -1,7 +1,6 @@
 import apis.AuthUtils;
 import apis.OutboundFlows;
 import com.shaft.tools.io.ReportManager;
-import io.qameta.allure.Step;
 import utils.DateUtils;
 import com.shaft.driver.SHAFT;
 import org.testng.annotations.AfterMethod;
@@ -39,7 +38,7 @@ public class OutboundTests {
         apiDriver = new SHAFT.API(baseURL);
         apiDriver.addHeader("authorization","Bearer "+token);
         OutboundFlows outboundObject=new OutboundFlows(apiDriver);
-        outboundObject.getWarehouse().getInventoryItems()
+        outboundObject.getWarehouse().getFirstValidInventoryItem()
                 .createOutbound(DateUtils.generateOutboundDeliveryDate(), 1);
 
         SHAFT.Validations.assertThat().object(outboundObject.getOutboundOrder().businessKey()).isNotNull();

@@ -57,8 +57,8 @@ public class OutboundFlows {
         return this;
     }
 
-    @Step("Get inventory items list for extracted warehouse")
-    public OutboundFlows getInventoryItems() {
+    @Step("Get inventory items list for extracted warehouse and select first valid item")
+    public OutboundFlows getFirstValidInventoryItem() {
         if (warehouseContext == null) {
             throw new IllegalStateException("Call getWarehouse() before getInventoryItems()");
         }
@@ -69,8 +69,31 @@ public class OutboundFlows {
         Response response = apiDriver.post(Endpoints.inventory)
                 .setRequestBody(Queries.GET_INVENTORY_ITEMS(
                         warehouseContext.warehouseInventoryId(),
+                        "",
                         LocalDate.now().plusDays(1).toString(),
                         "100") )
+                .setContentType(ContentType.JSON)
+                .perform()
+                .getResponse();
+
+        GraphQlAssertions.assertErrorsEmpty(apiDriver, "data.query_0_4.errors");
+        selectValidInventoryItem(response);
+
+        return this;
+    }
+
+    @Step("Get specific inventory item")
+    public OutboundFlows getSpecificInventoryItem(String searchKey) {
+        if (warehouseContext == null) {
+            throw new IllegalStateException("Call getWarehouse() before getInventoryItems()");
+        }
+
+        Response response = apiDriver.post(Endpoints.inventory)
+                .setRequestBody(Queries.GET_INVENTORY_ITEMS(
+                        warehouseContext.warehouseInventoryId(),
+                        searchKey,
+                        LocalDate.now().plusDays(1).toString(),
+                        "0") )
                 .setContentType(ContentType.JSON)
                 .perform()
                 .getResponse();

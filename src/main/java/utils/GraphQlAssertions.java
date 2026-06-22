@@ -5,10 +5,7 @@ import io.restassured.response.Response;
 
 import java.util.List;
 
-/**
- * Validates GraphQL error collections after {@link SHAFT.API#perform()}.
- * Successful runs use {@code null} or an empty list ({@code []}) for errors.
- */
+
 public final class GraphQlAssertions {
 
     private GraphQlAssertions() {
